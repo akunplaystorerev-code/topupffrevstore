@@ -210,6 +210,11 @@
             transition: opacity 0.5s ease;
         }
 
+        .main-content.active {
+            display: block;
+            opacity: 1;
+        }
+
         .user-info {
             background-color: rgba(255, 70, 85, 0.1);
             padding: 20px;
@@ -841,61 +846,70 @@
 
         // Render products
         function renderProducts() {
+            // Clear existing products first to avoid duplicates
+            productGrid1.innerHTML = '';
+            productGrid2.innerHTML = '';
+            productGrid3.innerHTML = '';
+            productGrid4.innerHTML = '';
+            productGrid5.innerHTML = '';
+            
             // Render Paket Hemat
             products.hemat.forEach(product => {
-                productGrid1.appendChild(createProductCard(product, 'hemat'));
+                const card = createProductCard(product, 'hemat');
+                productGrid1.appendChild(card);
+                
+                // Add event listener to the button in this card
+                const selectBtn = card.querySelector('.select-btn');
+                selectBtn.addEventListener('click', () => {
+                    selectProduct(product);
+                });
             });
             
             // Render Paket Menengah
             products.menengah.forEach(product => {
-                productGrid2.appendChild(createProductCard(product, 'menengah'));
+                const card = createProductCard(product, 'menengah');
+                productGrid2.appendChild(card);
+                
+                // Add event listener to the button in this card
+                const selectBtn = card.querySelector('.select-btn');
+                selectBtn.addEventListener('click', () => {
+                    selectProduct(product);
+                });
             });
             
             // Render Paket Besar
             products.besar.forEach(product => {
-                productGrid3.appendChild(createProductCard(product, 'besar'));
+                const card = createProductCard(product, 'besar');
+                productGrid3.appendChild(card);
+                
+                // Add event listener to the button in this card
+                const selectBtn = card.querySelector('.select-btn');
+                selectBtn.addEventListener('click', () => {
+                    selectProduct(product);
+                });
             });
             
             // Render Paket Premium
             products.premium.forEach(product => {
-                productGrid4.appendChild(createProductCard(product, 'premium'));
+                const card = createProductCard(product, 'premium');
+                productGrid4.appendChild(card);
+                
+                // Add event listener to the button in this card
+                const selectBtn = card.querySelector('.select-btn');
+                selectBtn.addEventListener('click', () => {
+                    selectProduct(product);
+                });
             });
             
             // Render Paket Ultimate
             products.ultimate.forEach(product => {
-                productGrid5.appendChild(createProductCard(product, 'ultimate'));
-            });
-            
-            // Add event listeners to select buttons
-            document.querySelectorAll('.select-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const diamonds = this.getAttribute('data-diamonds');
-                    const price = this.getAttribute('data-price');
-                    const category = this.getAttribute('data-category');
-                    
-                    // Find the full product object
-                    let productObj;
-                    switch(category) {
-                        case 'hemat':
-                            productObj = products.hemat.find(p => p.diamonds == diamonds);
-                            break;
-                        case 'menengah':
-                            productObj = products.menengah.find(p => p.diamonds == diamonds);
-                            break;
-                        case 'besar':
-                            productObj = products.besar.find(p => p.diamonds == diamonds);
-                            break;
-                        case 'premium':
-                            productObj = products.premium.find(p => p.diamonds == diamonds);
-                            break;
-                        case 'ultimate':
-                            productObj = products.ultimate.find(p => p.diamonds == diamonds);
-                            break;
-                    }
-                    
-                    if (productObj) {
-                        selectProduct(productObj);
-                    }
+                const card = createProductCard(product, 'ultimate');
+                productGrid5.appendChild(card);
+                
+                // Add event listener to the button in this card
+                const selectBtn = card.querySelector('.select-btn');
+                selectBtn.addEventListener('click', () => {
+                    selectProduct(product);
                 });
             });
         }
@@ -909,9 +923,9 @@
             let tagHtml = '';
             if (product.tag) {
                 if (product.tag === 'PROMO') {
-                    tagHtml = `<span style="background-color: var(--primary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem;">🎯 ${product.tag}</span>`;
+                    tagHtml = `<span style="background-color: var(--primary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">🎯 ${product.tag}</span>`;
                 } else if (product.tag === 'GRATIS Bonus') {
-                    tagHtml = `<span style="background-color: var(--warning); color: black; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem;">🔥 ${product.tag}</span>`;
+                    tagHtml = `<span style="background-color: var(--warning); color: black; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">🔥 ${product.tag}</span>`;
                 }
             }
             
@@ -933,6 +947,15 @@
             document.getElementById('summaryPrice').textContent = formatCurrency(product.price);
             document.getElementById('summaryTotal').textContent = formatCurrency(product.price);
             
+            // Reset payment method selection
+            paymentOptions.forEach(opt => opt.classList.remove('selected'));
+            selectedPaymentMethod = null;
+            document.getElementById('summaryMethod').textContent = '-';
+            
+            // Clear player ID and name fields
+            document.getElementById('playerId').value = '';
+            document.getElementById('playerName').value = '';
+            
             // Show order form and scroll to it
             orderForm.classList.add('active');
             orderForm.scrollIntoView({ behavior: 'smooth' });
@@ -953,6 +976,9 @@
             
             // Hide welcome screen
             welcomeScreen.style.opacity = '0';
+            setTimeout(() => {
+                welcomeScreen.style.display = 'none';
+            }, 500);
             
             // Show loading screen
             loadingScreen.classList.add('active');
@@ -963,14 +989,11 @@
                 loadingScreen.classList.remove('active');
                 
                 // Show main content
-                mainContent.style.display = 'block';
-                setTimeout(() => {
-                    mainContent.style.opacity = '1';
-                }, 50);
+                mainContent.classList.add('active');
                 
                 // Render products
                 renderProducts();
-            }, 2000);
+            }, 1500);
         });
 
         // Change name button
@@ -986,7 +1009,8 @@
         // Back to products button
         backToProductsBtn.addEventListener('click', function() {
             orderForm.classList.remove('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Scroll to top of products
+            document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
         });
 
         // Payment method selection
@@ -1067,6 +1091,9 @@ Silakan kirim instruksi pembayarannya.`;
         window.addEventListener('DOMContentLoaded', function() {
             // For demo, pre-fill with a sample name
             userNameInput.value = 'Player FF';
+            // Focus on input
+            userNameInput.focus();
+            userNameInput.select();
         });
     </script>
 </body>
